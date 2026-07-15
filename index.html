@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mega Gram Task App</title>
+  <!-- Telegram Web App Script -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     *, *::before, *::after {
@@ -106,7 +107,7 @@
     .task-reward {
       color: #2ecc71;
       font-size: 14px;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
     }
     .btn {
       width: 100%;
@@ -118,9 +119,41 @@
       font-weight: bold;
       cursor: pointer;
       text-align: center;
+      margin-bottom: 8px;
+    }
+    .btn-secondary {
+      background-color: #2c2c2c;
+      color: white;
+    }
+    .btn:disabled {
+      background-color: #444;
+      color: #888;
+      cursor: not-allowed;
     }
     .btn:active {
       opacity: 0.8;
+    }
+    /* Proof submission area */
+    .proof-area {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #333;
+    }
+    .file-input {
+      display: none;
+    }
+    .file-label {
+      display: inline-block;
+      width: 100%;
+      padding: 10px;
+      background-color: #2c2c2c;
+      border: 1px dashed #f39c12;
+      border-radius: 6px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 13px;
+      color: #f39c12;
+      margin-bottom: 10px;
     }
     /* Form input styles for Order Ads */
     .input-group {
@@ -145,10 +178,14 @@
       display: flex;
       justify-content: space-between;
       border-bottom: 1px solid #2c2c2c;
-      padding: 10px 0;
+      padding: 12px 0;
     }
     .history-item:last-child {
       border-bottom: none;
+    }
+    .status-pending {
+      color: #f1c40f;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -175,28 +212,47 @@
     <button class="tab" onclick="switchTab('ads', this)">Order Ads</button>
   </div>
 
+  <!-- TASKS TAB -->
   <div id="tasks-content" class="tab-content active">
-    <div class="task-card">
+    <!-- Task 1 -->
+    <div class="task-card" id="task-1">
       <div class="task-title">Follow on Telegram Channel</div>
       <div class="task-reward">+0.05 USDT</div>
-      <button class="btn" onclick="startTask('https://t.me/your_telegram_channel')">START TASK</button>
+      <button class="btn" onclick="openTaskLink('https://t.me/your_telegram_channel', 'task-1')">1. START TASK</button>
+      
+      <div class="proof-area">
+        <label class="file-label" for="file-1" id="file-label-1">📎 Upload Proof Screenshot</label>
+        <input type="file" id="file-1" class="file-input" accept="image/*" onchange="handleFileSelect(this, 'submit-btn-1', 'file-label-1')">
+        <button class="btn btn-secondary" id="submit-btn-1" disabled onclick="submitTask('Follow on Telegram Channel', 'file-1')">2. SUBMIT PROOF</button>
+      </div>
     </div>
-    <div class="task-card">
+
+    <!-- Task 2 -->
+    <div class="task-card" id="task-2">
       <div class="task-title">Subscribe to YouTube Channel</div>
       <div class="task-reward">+0.08 USDT</div>
-      <button class="btn" onclick="startTask('https://youtube.com/@your_channel')">START TASK</button>
-    </div>
-  </div>
-
-  <div id="history-content" class="tab-content">
-    <div class="info-card">
-      <div class="task-title" style="margin-bottom: 15px;">Your Completed Tasks</div>
-      <div id="history-list">
-        <div style="color: #888; text-align: center; padding: 15px;">No tasks completed yet.</div>
+      <button class="btn" onclick="openTaskLink('https://youtube.com/@your_channel', 'task-2')">1. START TASK</button>
+      
+      <div class="proof-area">
+        <label class="file-label" for="file-2" id="file-label-2">📎 Upload Proof Screenshot</label>
+        <input type="file" id="file-2" class="file-input" accept="image/*" onchange="handleFileSelect(this, 'submit-btn-2', 'file-label-2')">
+        <button class="btn btn-secondary" id="submit-btn-2" disabled onclick="submitTask('Subscribe to YouTube Channel', 'file-2')">2. SUBMIT PROOF</button>
       </div>
     </div>
   </div>
 
+  <!-- TASK HISTORY TAB -->
+  <div id="history-content" class="tab-content">
+    <div class="info-card">
+      <div class="task-title" style="margin-bottom: 15px;">Your Completed Tasks</div>
+      <div id="history-list">
+        <!-- Completed tasks will dynamically appear here -->
+        <div style="color: #888; text-align: center; padding: 15px;" id="no-history">No tasks submitted yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDER ADS TAB -->
   <div id="ads-content" class="tab-content">
     <div class="info-card">
       <div class="task-title" style="margin-bottom: 15px;">Order Advertisement</div>
@@ -219,59 +275,172 @@
   </div>
 
   <script>
+    // Configuration
+    const BOT_TOKEN = "8967475773:AAFs4aj1TdGhelMkaxzi5dmwbCdb4SQ2ggQ";
+    const ADMIN_CHAT_ID = "5967643083";
+
     // Initialize Telegram WebApp
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
 
-    // Setup user info
+    // User Details
     const user = tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
-    if (user) {
-      document.getElementById('username').innerText = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-      document.getElementById('user-avatar').innerText = user.first_name.charAt(0).toUpperCase();
-    } else {
-      document.getElementById('username').innerText = "Guest User";
-    }
+    const userId = user ? user.id : "UnknownID";
+    const userUsername = user && user.username ? "@" + user.username : "No_Username";
+    const fullName = user ? (user.first_name + (user.last_name ? ' ' + user.last_name : '')) : "Guest User";
 
-    // 1. Tab Switching Function (በተኖቹን የሚያንቀሳቅሰው ፈንክሽን)
+    document.getElementById('username').innerText = fullName;
+    document.getElementById('user-avatar').innerText = fullName.charAt(0).toUpperCase();
+
+    // Tab switcher
     function switchTab(tabId, tabButton) {
-      // Hide all tab contents
       const contents = document.getElementsByClassName('tab-content');
       for (let i = 0; i < contents.length; i++) {
         contents[i].classList.remove('active');
       }
-
-      // Remove active class from all tab buttons
       const buttons = document.getElementsByClassName('tab');
       for (let i = 0; i < buttons.length; i++) {
         buttons[i].classList.remove('active');
       }
-
-      // Show selected tab content and activate button
       document.getElementById(tabId + '-content').classList.add('active');
       tabButton.classList.add('active');
     }
 
-    // Task function
-    function startTask(url) {
+    // Open Link
+    function openTaskLink(url, cardId) {
       tg.openTelegramLink(url);
     }
 
-    // Form submission for ordering ads
+    // Handle File Selection
+    function handleFileSelect(input, submitBtnId, labelId) {
+      const submitBtn = document.getElementById(submitBtnId);
+      const label = document.getElementById(labelId);
+      
+      if (input.files && input.files[0]) {
+        label.innerText = "✓ Photo selected: " + input.files[0].name.substring(0, 15) + "...";
+        label.style.borderColor = "#2ecc71";
+        label.style.color = "#2ecc71";
+        submitBtn.disabled = false;
+        submitBtn.style.backgroundColor = "#f39c12";
+        submitBtn.style.color = "#000";
+      }
+    }
+
+    // Submit Task with Screenshot to Telegram Bot
+    function submitTask(taskName, fileInputId) {
+      const fileInput = document.getElementById(fileInputId);
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        tg.showAlert("Please select a screenshot first!");
+        return;
+      }
+
+      tg.showScanQrPopup({ text: "Sending proof..." }); // simple loader simulation
+      setTimeout(() => tg.closeScanQrPopup(), 1000);
+
+      // Create FormData to send image to Telegram Bot
+      const formData = new FormData();
+      formData.append("chat_id", ADMIN_CHAT_ID);
+      formData.append("photo", file);
+      
+      // Caption with User Info for Admin Control
+      const captionText = `🔔 **NEW TASK SUBMISSION** 🔔\n\n` +
+                          `👤 **User:** ${fullName} (${userUsername})\n` +
+                          `🆔 **ID:** \`${userId}\`\n` +
+                          `📝 **Task:** ${taskName}\n\n` +
+                          `Please review the attached screenshot.\n` +
+                          `🔗 [Contact User](tg://user?id=${userId})`;
+                          
+      formData.append("caption", captionText);
+      formData.append("parse_mode", "Markdown");
+
+      // Send Photo using Telegram Bot API
+      fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+        method: "POST",
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.ok) {
+          tg.showAlert("Success! Your proof has been submitted. The admin will review it soon.");
+          
+          // Add to Local Task History
+          const historyList = document.getElementById('history-list');
+          const noHistory = document.getElementById('no-history');
+          if (noHistory) noHistory.remove();
+
+          const newItem = document.createElement('div');
+          newItem.className = 'history-item';
+          newItem.innerHTML = `
+            <div>
+              <div style="font-weight:bold;">${taskName}</div>
+              <div style="font-size:12px; color:#888;">Just now</div>
+            </div>
+            <div class="status-pending">Pending Review</div>
+          `;
+          historyList.insertBefore(newItem, historyList.firstChild);
+
+          // Reset inputs
+          fileInput.value = "";
+          const labelId = fileInputId === 'file-1' ? 'file-label-1' : 'file-label-2';
+          const submitBtnId = fileInputId === 'file-1' ? 'submit-btn-1' : 'submit-btn-2';
+          
+          const label = document.getElementById(labelId);
+          label.innerText = "📎 Upload Proof Screenshot";
+          label.style.borderColor = "#f39c12";
+          label.style.color = "#f39c12";
+          
+          document.getElementById(submitBtnId).disabled = true;
+          document.getElementById(submitBtnId).style.backgroundColor = "#2c2c2c";
+          document.getElementById(submitBtnId).style.color = "white";
+        } else {
+          tg.showAlert("Failed to send proof. Please try again.");
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        tg.showAlert("An error occurred while sending proof.");
+      });
+    }
+
+    // Submit Ads Order
     function submitAdForm(event) {
       event.preventDefault();
       const title = document.getElementById('ad-title').value;
       const url = document.getElementById('ad-url').value;
       const budget = document.getElementById('ad-budget').value;
 
-      // Show Telegram alert
-      tg.showAlert(`Ad order submitted successfully!\nTitle: ${title}\nBudget: $${budget} USDT`);
-      
-      // Clear inputs
-      document.getElementById('ad-title').value = '';
-      document.getElementById('ad-url').value = '';
-      document.getElementById('ad-budget').value = '';
+      // Send ad order details to Admin Bot
+      const text = `📢 **NEW ADVERTISEMENT ORDER** 📢\n\n` +
+                   `👤 **From:** ${fullName} (${userUsername})\n` +
+                   `📝 **Ad Title:** ${title}\n` +
+                   `🔗 **Link:** ${url}\n` +
+                   `💰 **Budget:** ${budget} USDT`;
+
+      fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: ADMIN_CHAT_ID,
+          text: text,
+          parse_mode: "Markdown"
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.ok) {
+          tg.showAlert("Ad order submitted! Admin will contact you soon.");
+          document.getElementById('ad-title').value = '';
+          document.getElementById('ad-url').value = '';
+          document.getElementById('ad-budget').value = '';
+        } else {
+          tg.showAlert("Failed to submit ad order.");
+        }
+      });
     }
   </script>
 </body>
-</html>
+        </html>
+  
