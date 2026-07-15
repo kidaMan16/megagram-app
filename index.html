@@ -49,7 +49,7 @@
     }
     .balance-card {
       background: linear-gradient(135deg, #f39c12, #d35400);
-      padding: 25px;
+      padding: 20px;
       border-radius: 15px;
       text-align: center;
       margin-bottom: 20px;
@@ -62,30 +62,31 @@
     .balance-amount {
       font-size: 28px;
       font-weight: bold;
+      margin-bottom: 10px;
     }
     .tabs {
       display: flex;
-      gap: 10px;
+      gap: 5px;
       margin-bottom: 20px;
+      overflow-x: auto;
     }
     .tab {
       flex: 1;
       background-color: #1e1e1e;
       border: none;
       color: #aaa;
-      padding: 12px;
+      padding: 12px 8px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      font-size: 13px;
+      font-size: 12px;
       text-align: center;
-      transition: background-color 0.2s;
+      white-space: nowrap;
     }
     .tab.active {
       background-color: #f39c12;
       color: #000;
     }
-    /* Tab Contents Styling */
     .tab-content {
       display: none;
     }
@@ -125,19 +126,18 @@
       background-color: #2c2c2c;
       color: white;
     }
+    .btn-success {
+      background-color: #2ecc71;
+      color: white;
+    }
+    .btn-danger {
+      background-color: #e74c3c;
+      color: white;
+    }
     .btn:disabled {
       background-color: #444;
       color: #888;
       cursor: not-allowed;
-    }
-    .btn:active {
-      opacity: 0.8;
-    }
-    /* Proof submission area */
-    .proof-area {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px dashed #333;
     }
     .file-input {
       display: none;
@@ -155,7 +155,6 @@
       color: #f39c12;
       margin-bottom: 10px;
     }
-    /* Form input styles for Order Ads */
     .input-group {
       margin-bottom: 15px;
     }
@@ -174,19 +173,16 @@
       color: white;
       font-size: 14px;
     }
-    .history-item {
+    .history-item, .admin-item {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       border-bottom: 1px solid #2c2c2c;
       padding: 12px 0;
     }
-    .history-item:last-child {
-      border-bottom: none;
-    }
-    .status-pending {
-      color: #f1c40f;
-      font-weight: bold;
-    }
+    .status-pending { color: #f1c40f; font-weight: bold; }
+    .status-approved { color: #2ecc71; font-weight: bold; }
+    .status-rejected { color: #e74c3c; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -196,81 +192,85 @@
       <div class="avatar" id="user-avatar">U</div>
       <div>
         <div id="username" style="font-weight: bold;">Loading User...</div>
-        <div class="level">LV.1 Newbie</div>
+        <div class="level">LV.1 Member</div>
       </div>
     </div>
   </div>
 
   <div class="balance-card">
     <div class="balance-title">Available Balance</div>
-    <div class="balance-amount" id="balance-display">$0.00 USDT</div>
+    <div class="balance-amount" id="balance-display">0.00 USDT</div>
+    <button class="btn btn-secondary" style="margin: 5px auto 0; width: auto; padding: 6px 15px; font-size: 12px;" onclick="switchTab('withdraw', document.getElementById('tab-withdraw-btn'))" id="tab-withdraw-btn">Withdraw Funds</button>
   </div>
 
   <div class="tabs">
     <button class="tab active" onclick="switchTab('tasks', this)">Tasks</button>
-    <button class="tab" onclick="switchTab('history', this)">Task History</button>
-    <button class="tab" onclick="switchTab('ads', this)">Order Ads</button>
+    <button class="tab" onclick="switchTab('history', this)">History</button>
+    <button class="tab" id="admin-tab-btn" style="display: none;" onclick="switchTab('admin', this)">Admin Control</button>
   </div>
 
   <!-- TASKS TAB -->
   <div id="tasks-content" class="tab-content active">
-    <!-- Task 1 -->
-    <div class="task-card" id="task-1">
-      <div class="task-title">Follow on Telegram Channel</div>
-      <div class="task-reward">+0.05 USDT</div>
-      <button class="btn" onclick="openTaskLink('https://t.me/your_telegram_channel', 'task-1')">1. START TASK</button>
-      
-      <div class="proof-area">
-        <label class="file-label" for="file-1" id="file-label-1">📎 Upload Proof Screenshot</label>
-        <input type="file" id="file-1" class="file-input" accept="image/*" onchange="handleFileSelect(this, 'submit-btn-1', 'file-label-1')">
-        <button class="btn btn-secondary" id="submit-btn-1" disabled onclick="submitTask('Follow on Telegram Channel', 'file-1')">2. SUBMIT PROOF</button>
-      </div>
-    </div>
-
-    <!-- Task 2 -->
-    <div class="task-card" id="task-2">
-      <div class="task-title">Subscribe to YouTube Channel</div>
-      <div class="task-reward">+0.08 USDT</div>
-      <button class="btn" onclick="openTaskLink('https://youtube.com/@your_channel', 'task-2')">1. START TASK</button>
-      
-      <div class="proof-area">
-        <label class="file-label" for="file-2" id="file-label-2">📎 Upload Proof Screenshot</label>
-        <input type="file" id="file-2" class="file-input" accept="image/*" onchange="handleFileSelect(this, 'submit-btn-2', 'file-label-2')">
-        <button class="btn btn-secondary" id="submit-btn-2" disabled onclick="submitTask('Subscribe to YouTube Channel', 'file-2')">2. SUBMIT PROOF</button>
-      </div>
+    <div id="tasks-list">
+      <div style="text-align: center; padding: 20px; color: #888;">Loading available tasks...</div>
     </div>
   </div>
 
   <!-- TASK HISTORY TAB -->
   <div id="history-content" class="tab-content">
     <div class="info-card">
-      <div class="task-title" style="margin-bottom: 15px;">Your Completed Tasks</div>
+      <div class="task-title" style="margin-bottom: 15px;">Your Submissions</div>
       <div id="history-list">
-        <!-- Completed tasks will dynamically appear here -->
-        <div style="color: #888; text-align: center; padding: 15px;" id="no-history">No tasks submitted yet.</div>
+        <div style="color: #888; text-align: center; padding: 15px;">No tasks submitted yet.</div>
       </div>
     </div>
   </div>
 
-  <!-- ORDER ADS TAB -->
-  <div id="ads-content" class="tab-content">
+  <!-- WITHDRAW TAB -->
+  <div id="withdraw-content" class="tab-content">
     <div class="info-card">
-      <div class="task-title" style="margin-bottom: 15px;">Order Advertisement</div>
-      <form onsubmit="submitAdForm(event)">
+      <div class="task-title" style="margin-bottom: 15px;">Withdraw Funds</div>
+      <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Minimum withdrawal is 1.00 USDT (TRC-20 Network).</p>
+      <form onsubmit="handleWithdraw(event)">
         <div class="input-group">
-          <label>Ad Title (e.g. Join my channel)</label>
-          <input type="text" class="input-field" placeholder="Enter title" required id="ad-title">
+          <label>USDT TRC-20 Wallet Address</label>
+          <input type="text" class="input-field" id="withdraw-address" placeholder="T..." required>
+        </div>
+        <div class="input-group">
+          <label>Amount to Withdraw (USDT)</label>
+          <input type="number" step="0.01" class="input-field" id="withdraw-amount" placeholder="0.00" required>
+        </div>
+        <button type="submit" class="btn">REQUEST WITHDRAWAL</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN CONTROL TAB (Secured) -->
+  <div id="admin-content" class="tab-content">
+    <div class="info-card">
+      <div class="task-title" style="color: #f39c12; margin-bottom: 15px;">➕ Create New Task</div>
+      <form onsubmit="createNewTask(event)">
+        <div class="input-group">
+          <label>Task Title</label>
+          <input type="text" class="input-field" id="new-task-title" placeholder="e.g. Join our Telegram" required>
+        </div>
+        <div class="input-group">
+          <label>Reward Amount (USDT)</label>
+          <input type="number" step="0.01" class="input-field" id="new-task-reward" placeholder="0.05" required>
         </div>
         <div class="input-group">
           <label>Target URL (Link)</label>
-          <input type="url" class="input-field" placeholder="https://t.me/..." required id="ad-url">
+          <input type="url" class="input-field" id="new-task-url" placeholder="https://t.me/..." required>
         </div>
-        <div class="input-group">
-          <label>Budget (USDT)</label>
-          <input type="number" step="0.01" class="input-field" placeholder="0.00" required id="ad-budget">
-        </div>
-        <button type="submit" class="btn">SUBMIT AD ORDER</button>
+        <button type="submit" class="btn btn-success">PUBLISH TASK</button>
       </form>
+    </div>
+
+    <div class="info-card">
+      <div class="task-title" style="color: #f39c12; margin-bottom: 15px;">⚙️ Manage Submissions</div>
+      <div id="admin-submissions-list">
+        <div style="color: #888; text-align: center; padding: 15px;">No pending reviews.</div>
+      </div>
     </div>
   </div>
 
@@ -278,6 +278,7 @@
     // Configuration
     const BOT_TOKEN = "8967475773:AAFs4aj1TdGhelMkaxzi5dmwbCdb4SQ2ggQ";
     const ADMIN_CHAT_ID = "5967643083";
+    const FIREBASE_URL = "https://megagramapp-fcda8-default-rtdb.firebaseio.com/";
 
     // Initialize Telegram WebApp
     const tg = window.Telegram.WebApp;
@@ -286,161 +287,305 @@
 
     // User Details
     const user = tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
-    const userId = user ? user.id : "UnknownID";
+    const userId = user ? String(user.id) : "demo_user_123";
     const userUsername = user && user.username ? "@" + user.username : "No_Username";
     const fullName = user ? (user.first_name + (user.last_name ? ' ' + user.last_name : '')) : "Guest User";
 
     document.getElementById('username').innerText = fullName;
     document.getElementById('user-avatar').innerText = fullName.charAt(0).toUpperCase();
 
-    // Tab switcher
-    function switchTab(tabId, tabButton) {
-      const contents = document.getElementsByClassName('tab-content');
-      for (let i = 0; i < contents.length; i++) {
-        contents[i].classList.remove('active');
-      }
-      const buttons = document.getElementsByClassName('tab');
-      for (let i = 0; i < buttons.length; i++) {
-        buttons[i].classList.remove('active');
-      }
-      document.getElementById(tabId + '-content').classList.add('active');
-      tabButton.classList.add('active');
+    let userBalance = 0.00;
+
+    // Show Admin Tab if user is Admin
+    if (userId === ADMIN_CHAT_ID) {
+      document.getElementById('admin-tab-btn').style.display = 'block';
     }
 
-    // Open Link
-    function openTaskLink(url, cardId) {
-      tg.openTelegramLink(url);
+    // Load User Data & Tasks on Launch
+    fetchUserData();
+    loadTasks();
+    loadSubmissionsHistory();
+    if (userId === ADMIN_CHAT_ID) {
+      loadAllSubmissionsForAdmin();
     }
 
-    // Handle File Selection
-    function handleFileSelect(input, submitBtnId, labelId) {
-      const submitBtn = document.getElementById(submitBtnId);
+    function fetchUserData() {
+      fetch(`${FIREBASE_URL}users/${userId}.json`)
+        .then(res => res.json())
+        .then(data => {
+          if (data) {
+            userBalance = data.balance || 0.00;
+          } else {
+            userBalance = 0.00;
+            saveUserData();
+          }
+          document.getElementById('balance-display').innerText = userBalance.toFixed(2) + " USDT";
+        });
+    }
+
+    function saveUserData() {
+      fetch(`${FIREBASE_URL}users/${userId}.json`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: userUsername,
+          name: fullName,
+          balance: userBalance
+        })
+      });
+    }
+
+    function loadTasks() {
+      fetch(`${FIREBASE_URL}tasks.json`)
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('tasks-list');
+          container.innerHTML = "";
+          
+          if (!data) {
+            const defaultTasks = {
+              "task-1": { title: "Follow on Telegram Channel", reward: 0.05, url: "https://t.me/your_telegram_channel" },
+              "task-2": { title: "Subscribe to YouTube Channel", reward: 0.08, url: "https://youtube.com/@your_channel" }
+            };
+            fetch(`${FIREBASE_URL}tasks.json`, {
+              method: "PUT",
+              body: JSON.stringify(defaultTasks)
+            }).then(() => loadTasks());
+            return;
+          }
+
+          Object.keys(data).forEach(taskId => {
+            const task = data[taskId];
+            const card = document.createElement('div');
+            card.className = "task-card";
+            card.innerHTML = `
+              <div class="task-title">${task.title}</div>
+              <div class="task-reward">+${task.reward.toFixed(2)} USDT</div>
+              <button class="btn" onclick="tg.openTelegramLink('${task.url}')">1. START TASK</button>
+              <div class="proof-area">
+                <label class="file-label" for="file-${taskId}" id="label-${taskId}">📎 Upload Proof Screenshot</label>
+                <input type="file" id="file-${taskId}" class="file-input" accept="image/*" onchange="handleFileSelect(this, 'btn-${taskId}', 'label-${taskId}')">
+                <button class="btn btn-secondary" id="btn-${taskId}" disabled onclick="submitTask('${taskId}', '${task.title}', ${task.reward}, 'file-${taskId}')">2. SUBMIT PROOF</button>
+              </div>
+            `;
+            container.appendChild(card);
+          });
+        });
+    }
+
+    function handleFileSelect(input, btnId, labelId) {
+      const btn = document.getElementById(btnId);
       const label = document.getElementById(labelId);
-      
       if (input.files && input.files[0]) {
-        label.innerText = "✓ Photo selected: " + input.files[0].name.substring(0, 15) + "...";
+        label.innerText = "✓ Photo selected";
         label.style.borderColor = "#2ecc71";
         label.style.color = "#2ecc71";
-        submitBtn.disabled = false;
-        submitBtn.style.backgroundColor = "#f39c12";
-        submitBtn.style.color = "#000";
+        btn.disabled = false;
+        btn.classList.remove('btn-secondary');
       }
     }
 
-    // Submit Task with Screenshot to Telegram Bot
-    function submitTask(taskName, fileInputId) {
+    function submitTask(taskId, taskTitle, reward, fileInputId) {
       const fileInput = document.getElementById(fileInputId);
       const file = fileInput.files[0];
+      if (!file) return;
+
+      const submissionId = "sub_" + Date.now();
       
-      if (!file) {
-        tg.showAlert("Please select a screenshot first!");
+      const reader = new FileReader();
+      reader.onloadend = function() {
+        const base64Data = reader.result;
+        
+        const submissionData = {
+          userId: userId,
+          username: userUsername,
+          name: fullName,
+          taskId: taskId,
+          taskTitle: taskTitle,
+          reward: reward,
+          status: "pending",
+          screenshot: base64Data,
+          timestamp: new Date().toISOString()
+        };
+
+        fetch(`${FIREBASE_URL}submissions/${submissionId}.json`, {
+          method: "PUT",
+          body: JSON.stringify(submissionData)
+        })
+        .then(() => {
+          tg.showAlert("Proof submitted! Waiting for Admin approval.");
+          loadSubmissionsHistory();
+          
+          fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: ADMIN_CHAT_ID,
+              text: `🔔 **NEW SUBMISSION**\n👤 **User:** ${fullName} (${userUsername})\n📝 **Task:** ${taskTitle}\n💰 **Reward:** ${reward} USDT\n\n_Review this in the Admin Control Tab inside the Mini App._`,
+              parse_mode: "Markdown"
+            })
+          });
+
+          fileInput.value = "";
+          document.getElementById(`label-${taskId}`).innerText = "📎 Upload Proof Screenshot";
+          document.getElementById(`label-${taskId}`).style.borderColor = "#f39c12";
+          document.getElementById(`label-${taskId}`).style.color = "#f39c12";
+          document.getElementById(fileInputId.replace('file-', 'btn-')).disabled = true;
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function loadSubmissionsHistory() {
+      fetch(`${FIREBASE_URL}submissions.json`)
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('history-list');
+          container.innerHTML = "";
+          let count = 0;
+
+          if (data) {
+            Object.keys(data).forEach(subId => {
+              const sub = data[subId];
+              if (sub.userId === userId) {
+                count++;
+                const item = document.createElement('div');
+                item.className = "history-item";
+                item.innerHTML = `
+                  <div>
+                    <div style="font-weight:bold;">${sub.taskTitle}</div>
+                    <div style="font-size:12px; color:#888;">+${sub.reward.toFixed(2)} USDT</div>
+                  </div>
+                  <div class="status-${sub.status}">${sub.status.toUpperCase()}</div>
+                `;
+                container.appendChild(item);
+              }
+            });
+          }
+          if (count === 0) {
+            container.innerHTML = '<div style="color:#888; text-align:center; padding:15px;">No submissions yet.</div>';
+          }
+        });
+    }
+
+    function handleWithdraw(event) {
+      event.preventDefault();
+      const address = document.getElementById('withdraw-address').value;
+      const amount = parseFloat(document.getElementById('withdraw-amount').value);
+
+      if (amount < 1.00) {
+        tg.showAlert("Minimum withdrawal limit is 1.00 USDT.");
         return;
       }
 
-      tg.showScanQrPopup({ text: "Sending proof..." }); // simple loader simulation
-      setTimeout(() => tg.closeScanQrPopup(), 1000);
+      if (amount > userBalance) {
+        tg.showAlert("Insufficient balance.");
+        return;
+      }
 
-      // Create FormData to send image to Telegram Bot
-      const formData = new FormData();
-      formData.append("chat_id", ADMIN_CHAT_ID);
-      formData.append("photo", file);
-      
-      // Caption with User Info for Admin Control
-      const captionText = `🔔 **NEW TASK SUBMISSION** 🔔\n\n` +
-                          `👤 **User:** ${fullName} (${userUsername})\n` +
-                          `🆔 **ID:** \`${userId}\`\n` +
-                          `📝 **Task:** ${taskName}\n\n` +
-                          `Please review the attached screenshot.\n` +
-                          `🔗 [Contact User](tg://user?id=${userId})`;
-                          
-      formData.append("caption", captionText);
-      formData.append("parse_mode", "Markdown");
+      userBalance -= amount;
+      saveUserData();
+      document.getElementById('balance-display').innerText = userBalance.toFixed(2) + " USDT";
 
-      // Send Photo using Telegram Bot API
-      fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-        method: "POST",
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.ok) {
-          tg.showAlert("Success! Your proof has been submitted. The admin will review it soon.");
-          
-          // Add to Local Task History
-          const historyList = document.getElementById('history-list');
-          const noHistory = document.getElementById('no-history');
-          if (noHistory) noHistory.remove();
+      const withdrawId = "wd_" + Date.now();
+      const wdData = {
+        userId: userId,
+        username: userUsername,
+        name: fullName,
+        address: address,
+        amount: amount,
+        status: "pending",
+        timestamp: new Date().toISOString()
+      };
 
-          const newItem = document.createElement('div');
-          newItem.className = 'history-item';
-          newItem.innerHTML = `
-            <div>
-              <div style="font-weight:bold;">${taskName}</div>
-              <div style="font-size:12px; color:#888;">Just now</div>
-            </div>
-            <div class="status-pending">Pending Review</div>
-          `;
-          historyList.insertBefore(newItem, historyList.firstChild);
+      fetch(`${FIREBASE_URL}withdrawals/${withdrawId}.json`, {
+        method: "PUT",
+        body: JSON.stringify(wdData)
+      }).then(() => {
+        tg.showAlert("Withdrawal request sent successfully!");
+        document.getElementById('withdraw-address').value = "";
+        document.getElementById('withdraw-amount').value = "";
 
-          // Reset inputs
-          fileInput.value = "";
-          const labelId = fileInputId === 'file-1' ? 'file-label-1' : 'file-label-2';
-          const submitBtnId = fileInputId === 'file-1' ? 'submit-btn-1' : 'submit-btn-2';
-          
-          const label = document.getElementById(labelId);
-          label.innerText = "📎 Upload Proof Screenshot";
-          label.style.borderColor = "#f39c12";
-          label.style.color = "#f39c12";
-          
-          document.getElementById(submitBtnId).disabled = true;
-          document.getElementById(submitBtnId).style.backgroundColor = "#2c2c2c";
-          document.getElementById(submitBtnId).style.color = "white";
-        } else {
-          tg.showAlert("Failed to send proof. Please try again.");
-        }
-      })
-      .catch(error => {
-        console.error("Error:", error);
-        tg.showAlert("An error occurred while sending proof.");
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: ADMIN_CHAT_ID,
+            text: `💰 **NEW WITHDRAWAL REQUEST**\n👤 **User:** ${fullName} (${userUsername})\n💸 **Amount:** ${amount} USDT\n🔑 **TRC20 Wallet:** \`${address}\``,
+            parse_mode: "Markdown"
+          })
+        });
       });
     }
 
-    // Submit Ads Order
-    function submitAdForm(event) {
+    // Admin Tools
+    function createNewTask(event) {
       event.preventDefault();
-      const title = document.getElementById('ad-title').value;
-      const url = document.getElementById('ad-url').value;
-      const budget = document.getElementById('ad-budget').value;
+      const title = document.getElementById('new-task-title').value;
+      const reward = parseFloat(document.getElementById('new-task-reward').value);
+      const url = document.getElementById('new-task-url').value;
 
-      // Send ad order details to Admin Bot
-      const text = `📢 **NEW ADVERTISEMENT ORDER** 📢\n\n` +
-                   `👤 **From:** ${fullName} (${userUsername})\n` +
-                   `📝 **Ad Title:** ${title}\n` +
-                   `🔗 **Link:** ${url}\n` +
-                   `💰 **Budget:** ${budget} USDT`;
+      const newId = "task_" + Date.now();
+      const taskData = { title, reward, url };
 
-      fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: ADMIN_CHAT_ID,
-          text: text,
-          parse_mode: "Markdown"
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.ok) {
-          tg.showAlert("Ad order submitted! Admin will contact you soon.");
-          document.getElementById('ad-title').value = '';
-          document.getElementById('ad-url').value = '';
-          document.getElementById('ad-budget').value = '';
-        } else {
-          tg.showAlert("Failed to submit ad order.");
-        }
+      fetch(`${FIREBASE_URL}tasks/${newId}.json`, {
+        method: "PUT",
+        body: JSON.stringify(taskData)
+      }).then(() => {
+        tg.showAlert("Task published successfully!");
+        document.getElementById('new-task-title').value = "";
+        document.getElementById('new-task-reward').value = "";
+        document.getElementById('new-task-url').value = "";
+        loadTasks();
       });
     }
-  </script>
-</body>
-        </html>
-  
+
+    function loadAllSubmissionsForAdmin() {
+      fetch(`${FIREBASE_URL}submissions.json`)
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('admin-submissions-list');
+          container.innerHTML = "";
+          let pendingCount = 0;
+
+          if (data) {
+            Object.keys(data).forEach(subId => {
+              const sub = data[subId];
+              if (sub.status === "pending") {
+                pendingCount++;
+                const item = document.createElement('div');
+                item.className = "admin-item";
+                item.style.flexDirection = "column";
+                item.style.alignItems = "flex-start";
+                item.innerHTML = `
+                  <div style="margin-bottom: 8px; width: 100%;">
+                    <strong>👤 User:</strong> ${sub.name} (${sub.username})<br>
+                    <strong>📝 Task:</strong> ${sub.taskTitle}<br>
+                    <strong>💰 Reward:</strong> ${sub.reward} USDT
+                  </div>
+                  <img src="${sub.screenshot}" style="max-width: 100%; border-radius: 8px; margin-bottom: 10px;" alt="Proof">
+                  <div style="display: flex; gap: 10px; width: 100%;">
+                    <button class="btn btn-success" style="margin: 0;" onclick="approveSubmission('${subId}', '${sub.userId}', ${sub.reward})">Approve</button>
+                    <button class="btn btn-danger" style="margin: 0; background-color: #e74c3c;" onclick="rejectSubmission('${subId}')">Reject</button>
+                  </div>
+                `;
+                container.appendChild(item);
+              }
+            });
+          }
+          if (pendingCount === 0) {
+            container.innerHTML = '<div style="color:#888; text-align:center; padding:15px;">No pending reviews.</div>';
+          }
+        });
+    }
+
+    function approveSubmission(subId, subUserId, reward) {
+      fetch(`${FIREBASE_URL}submissions/${subId}/status.json`, {
+        method: "PUT",
+        body: JSON.stringify("approved")
+      }).then(() => {
+        fetch(`${FIREBASE_URL}users/${subUserId}/balance.json`)
+          .then(res => res.json())
+          .then(currentBalance => {
+            const newBal = (currentBalance || 0.0) + reward;
+            fetch(`${FIREBASE_URL}users/${sub
