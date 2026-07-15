@@ -320,6 +320,9 @@
             saveUserData();
           }
           document.getElementById('balance-display').innerText = userBalance.toFixed(2) + " USDT";
+        })
+        .catch(err => {
+          console.error("Firebase fetch error:", err);
         });
     }
 
@@ -370,6 +373,9 @@
             `;
             container.appendChild(card);
           });
+        })
+        .catch(err => {
+          document.getElementById('tasks-list').innerHTML = `<div style="text-align: center; padding: 20px; color: #e74c3c;">Failed to load tasks. Please check your internet.</div>`;
         });
     }
 
@@ -581,11 +587,4 @@
 
     function approveSubmission(subId, subUserId, reward) {
       fetch(`${FIREBASE_URL}submissions/${subId}/status.json`, {
-        method: "PUT",
-        body: JSON.stringify("approved")
-      }).then(() => {
-        fetch(`${FIREBASE_URL}users/${subUserId}/balance.json`)
-          .then(res => res.json())
-          .then(currentBalance => {
-            const newBal = (currentBalance || 0.0) + reward;
-            fetch(`${FIREBASE_URL}users/${sub
+        method: "PU
