@@ -4,9 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mega Gram Task App</title>
-  <!-- Telegram Web App Script -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #121212;
@@ -74,18 +76,27 @@
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      font-size: 14px;
+      font-size: 13px;
       text-align: center;
+      transition: background-color 0.2s;
     }
     .tab.active {
       background-color: #f39c12;
       color: #000;
     }
-    .task-card {
+    /* Tab Contents Styling */
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .task-card, .info-card {
       background-color: #1e1e1e;
       padding: 15px;
       border-radius: 12px;
       border: 1px solid #2c2c2c;
+      margin-bottom: 15px;
     }
     .task-title {
       font-weight: bold;
@@ -106,6 +117,38 @@
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
+      text-align: center;
+    }
+    .btn:active {
+      opacity: 0.8;
+    }
+    /* Form input styles for Order Ads */
+    .input-group {
+      margin-bottom: 15px;
+    }
+    .input-group label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 5px;
+      color: #bbb;
+    }
+    .input-field {
+      width: 100%;
+      padding: 10px;
+      background-color: #121212;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: white;
+      font-size: 14px;
+    }
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #2c2c2c;
+      padding: 10px 0;
+    }
+    .history-item:last-child {
+      border-bottom: none;
     }
   </style>
 </head>
@@ -123,19 +166,56 @@
 
   <div class="balance-card">
     <div class="balance-title">Available Balance</div>
-    <div class="balance-amount">$0.00 USDT</div>
+    <div class="balance-amount" id="balance-display">$0.00 USDT</div>
   </div>
 
   <div class="tabs">
-    <button class="tab active">Tasks</button>
-    <button class="tab">Task History</button>
-    <button class="tab">Order Ads</button>
+    <button class="tab active" onclick="switchTab('tasks', this)">Tasks</button>
+    <button class="tab" onclick="switchTab('history', this)">Task History</button>
+    <button class="tab" onclick="switchTab('ads', this)">Order Ads</button>
   </div>
 
-  <div class="task-card">
-    <div class="task-title">Follow on Telegram Channel</div>
-    <div class="task-reward">+0.05 USDT</div>
-    <button class="btn" onclick="startTask()">START TASK</button>
+  <div id="tasks-content" class="tab-content active">
+    <div class="task-card">
+      <div class="task-title">Follow on Telegram Channel</div>
+      <div class="task-reward">+0.05 USDT</div>
+      <button class="btn" onclick="startTask('https://t.me/your_telegram_channel')">START TASK</button>
+    </div>
+    <div class="task-card">
+      <div class="task-title">Subscribe to YouTube Channel</div>
+      <div class="task-reward">+0.08 USDT</div>
+      <button class="btn" onclick="startTask('https://youtube.com/@your_channel')">START TASK</button>
+    </div>
+  </div>
+
+  <div id="history-content" class="tab-content">
+    <div class="info-card">
+      <div class="task-title" style="margin-bottom: 15px;">Your Completed Tasks</div>
+      <div id="history-list">
+        <div style="color: #888; text-align: center; padding: 15px;">No tasks completed yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ads-content" class="tab-content">
+    <div class="info-card">
+      <div class="task-title" style="margin-bottom: 15px;">Order Advertisement</div>
+      <form onsubmit="submitAdForm(event)">
+        <div class="input-group">
+          <label>Ad Title (e.g. Join my channel)</label>
+          <input type="text" class="input-field" placeholder="Enter title" required id="ad-title">
+        </div>
+        <div class="input-group">
+          <label>Target URL (Link)</label>
+          <input type="url" class="input-field" placeholder="https://t.me/..." required id="ad-url">
+        </div>
+        <div class="input-group">
+          <label>Budget (USDT)</label>
+          <input type="number" step="0.01" class="input-field" placeholder="0.00" required id="ad-budget">
+        </div>
+        <button type="submit" class="btn">SUBMIT AD ORDER</button>
+      </form>
+    </div>
   </div>
 
   <script>
@@ -144,24 +224,54 @@
     tg.ready();
     tg.expand();
 
-    // Get User Data from Telegram
+    // Setup user info
     const user = tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
-    
     if (user) {
-      // Set User's First Name or Username
       document.getElementById('username').innerText = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-      // Set First Letter for Avatar
       document.getElementById('user-avatar').innerText = user.first_name.charAt(0).toUpperCase();
     } else {
-      // Fallback if opened in regular web browser
       document.getElementById('username').innerText = "Guest User";
     }
 
-    function startTask() {
-      // Redirects to your channel (You can replace this with your actual channel link)
-      tg.openTelegramLink("https://t.me/your_telegram_channel");
+    // 1. Tab Switching Function (በተኖቹን የሚያንቀሳቅሰው ፈንክሽን)
+    function switchTab(tabId, tabButton) {
+      // Hide all tab contents
+      const contents = document.getElementsByClassName('tab-content');
+      for (let i = 0; i < contents.length; i++) {
+        contents[i].classList.remove('active');
+      }
+
+      // Remove active class from all tab buttons
+      const buttons = document.getElementsByClassName('tab');
+      for (let i = 0; i < buttons.length; i++) {
+        buttons[i].classList.remove('active');
+      }
+
+      // Show selected tab content and activate button
+      document.getElementById(tabId + '-content').classList.add('active');
+      tabButton.classList.add('active');
+    }
+
+    // Task function
+    function startTask(url) {
+      tg.openTelegramLink(url);
+    }
+
+    // Form submission for ordering ads
+    function submitAdForm(event) {
+      event.preventDefault();
+      const title = document.getElementById('ad-title').value;
+      const url = document.getElementById('ad-url').value;
+      const budget = document.getElementById('ad-budget').value;
+
+      // Show Telegram alert
+      tg.showAlert(`Ad order submitted successfully!\nTitle: ${title}\nBudget: $${budget} USDT`);
+      
+      // Clear inputs
+      document.getElementById('ad-title').value = '';
+      document.getElementById('ad-url').value = '';
+      document.getElementById('ad-budget').value = '';
     }
   </script>
 </body>
-  </html>
-  
+</html>
